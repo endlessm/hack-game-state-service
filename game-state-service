@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+
+import gi
+import traceback
+gi.require_version('GLib', '2.0')  # nopep8
+gi.require_version('Json', '1.0')  # nopep8
+from gi.repository import Gio
+from gi.repository import GLib
+from gi.repository import Json
+
+
+class GameState(object):
+
+    _DEFERRED_TIME = 250
+    _FILE_PATH = GLib.build_filenamev([GLib.get_user_data_dir(), 'state.json'])
+
+    def __init__(self):
+        self._state = None
+        self._save_deferred_id = None
+        self._from_file()
+
+    def _from_file(self):
+        parser = Json.Parser()
+        try:
+            parser.load_from_file(self._FILE_PATH)
+            root = parser.get_root()
+            assert root is not None
+            self._state = root.get_object()
+            assert self._state is not None
+        except (GLib.Error, AssertionError):
+            traceback.print_exc()
+            self._state = Json.Object()
+
+    def _to_file(self):
+        root = Json.Node(Json.NodeType.OBJECT)
+        root.set_object(self._state)
+        generator = Json.Generator(root=root, pretty=True, indent=2)
+        try:
+            generator.to_file(self._FILE_PATH)
+        except GLib.Error:
+            traceback.print_exc()
+
+    def _save_deferred(self):
+        # If there is a pending save, piggyback.
+        if self._save_deferred_id is not None:
+            return
+        self._save_deferred_id = GLib.timeout_add(
+            self._DEFERRED_TIME,
+            self._on_save_deferred)
+
+    def _on_save_deferred(self):
+        self._to_file()
+        self._save_deferred_id = None
+        return GLib.SOURCE_REMOVE
+
+    def get(self, key):
+        member = self._state.get_member(key)
+        if not member:
+            raise KeyError
+        return Json.gvariant_deserialize(member)
+
+    def set(self, key, value):
+        member = Json.gvariant_serialize(value)
+        self._state.set_member(key, member)
+        self._save_deferred()
+
+    def flush(self):
+        # If there is no pending save, return.
+        if self._save_deferred_id is None:
+            return
+        GLib.source_remove(self._save_deferred_id)
+        self._save_deferred_id = None
+        self._to_file()
+
+
+class GameStateService(Gio.Application):
+
+    _DBUS_NAME = 'com.endlessm.GameStateService'
+    _DBUS_KEY_ERROR = 'com.endlessm.GameStateService.KeyError'
+    _DBUS_XML = '''
+    <node>
+      <interface name='com.endlessm.GameStateService'>
+        <method name='Get'>
+          <arg type='s' name='key' direction='in'/>
+          <arg type='v' name='value' direction='out'/>
+        </method>
+        <method name='Set'>
+          <arg type='s' name='key' direction='in'/>
+          <arg type='v' name='value' direction='in'/>
+        </method>
+        <signal name='changed'>
+          <arg type='s' name='key'/>
+          <arg type='v' name='value'/>
+        </signal>
+      </interface>
+    </node>
+    '''
+
+    def __init__(self):
+        super().__init__(application_id=self._DBUS_NAME,
+                         flags=Gio.ApplicationFlags.IS_SERVICE)
+        self._dbus_id = None
+        self._state = None
+
+    def _on_method_called(self, connection, sender, path, iface,
+                          method, params, invocation):
+        key = params[0]
+        if method == 'Set':
+            self._state.set(key, params.get_child_value(1))
+            connection.emit_signal(None, path, iface, 'changed', params)
+            invocation.return_value(None)
+        elif method == 'Get':
+            try:
+                value = self._state.get(key)
+            except KeyError:
+                invocation.return_dbus_error(
+                    self._DBUS_KEY_ERROR,
+                    'key %s does not exist' % key)
+            else:
+                invocation.return_value(GLib.Variant('(v)', (value,)))
+
+    def do_dbus_register(self, connection, path):
+        info = Gio.DBusNodeInfo.new_for_xml(self._DBUS_XML)
+        self._dbus_id = connection.register_object(path,
+                                                   info.interfaces[0],
+                                                   self._on_method_called)
+        return Gio.Application.do_dbus_register(self, connection, path)
+
+    def do_dbus_unregister(self, connection, path):
+        Gio.Application.do_dbus_unregister(self, connection, path)
+        if not self._dbus_id:
+            return
+        connection.unregister_object(self._dbus_id)
+        self._dbus_id = None
+
+    def do_startup(self):
+        self._state = GameState()
+        Gio.Application.do_startup(self)
+
+    def do_shutdown(self):
+        self._state.flush()
+        Gio.Application.do_shutdown(self)
+
+if __name__ == '__main__':
+    service = GameStateService()
+    service.run(None)
