@@ -2,8 +2,8 @@
 
 import gi
 import traceback
-gi.require_version('GLib', '2.0')  # nopep8
-gi.require_version('Json', '1.0')  # nopep8
+gi.require_version('GLib', '2.0')  # noqa
+gi.require_version('Json', '1.0')  # noqa
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import Json
@@ -140,6 +140,7 @@ class GameStateService(Gio.Application):
     def do_shutdown(self):
         self._state.flush()
         Gio.Application.do_shutdown(self)
+
 
 if __name__ == '__main__':
     service = GameStateService()
