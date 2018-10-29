@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 
 import gi
-import traceback
+import logging
 gi.require_version('GLib', '2.0')  # noqa
 gi.require_version('Json', '1.0')  # noqa
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import Json
+
+
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
+
+
+class InvalidStateError(Exception):
+    pass
 
 
 class GameState(object):
@@ -24,12 +32,25 @@ class GameState(object):
         try:
             parser.load_from_file(self._FILE_PATH)
             root = parser.get_root()
-            assert root is not None
+            if root is None:
+                raise InvalidStateError()
             self._state = root.get_object()
-            assert self._state is not None
-        except (GLib.Error, AssertionError):
-            traceback.print_exc()
+            if self._state is None:
+                raise InvalidStateError()
+            reset = False
+        except GLib.Error as e:
+            if GLib.quark_from_string(e.domain) == GLib.file_error_quark():
+                _logger.error('Can\'t read state file. %s' % e.message)
+            if GLib.quark_from_string(e.domain) == Json.parser_error_quark():
+                _logger.error('Can\'t parse state JSON. %s' % e.message)
+            reset = True
+        except InvalidStateError:
+            _logger.error('Wrong contents in state file %s' % self._FILE_PATH)
+            reset = True
+
+        if reset:
             self._state = Json.Object()
+            _logger.info('Starting game state from scratch')
 
     def _to_file(self):
         root = Json.Node(Json.NodeType.OBJECT)
@@ -37,8 +58,8 @@ class GameState(object):
         generator = Json.Generator(root=root, pretty=True, indent=2)
         try:
             generator.to_file(self._FILE_PATH)
-        except GLib.Error:
-            traceback.print_exc()
+        except GLib.Error as e:
+            _logger.error('Can\'t write state file. %s' % e.message)
 
     def _save_deferred(self):
         # If there is a pending save, piggyback.
