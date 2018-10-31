@@ -9,7 +9,10 @@ from gi.repository import GLib
 from gi.repository import Json
 
 
-logging.basicConfig(level=logging.INFO)
+level = logging.INFO
+if GLib.getenv('GAME_STATE_DEBUG') is not None:
+    level = logging.DEBUG
+logging.basicConfig(level=level)
 _logger = logging.getLogger(__name__)
 
 
@@ -116,6 +119,7 @@ class GameStateService(Gio.Application):
       </interface>
     </node>
     '''
+    _DEBUG_FORMAT = 'sender: {}, method: {}, key: {}, value: {}'
 
     def __init__(self):
         super().__init__(application_id=self._DBUS_NAME,
@@ -127,12 +131,21 @@ class GameStateService(Gio.Application):
                           method, params, invocation):
         key = params[0]
         if method == 'Set':
-            self._state.set(key, params.get_child_value(1))
+            value = params.get_child_value(1)
+            _logger.debug(self._DEBUG_FORMAT.format(sender,
+                                                    method,
+                                                    key,
+                                                    value))
+            self._state.set(key, value)
             connection.emit_signal(None, path, iface, 'changed', params)
             invocation.return_value(None)
         elif method == 'Get':
             try:
                 value = self._state.get(key)
+                _logger.debug(self._DEBUG_FORMAT.format(sender,
+                                                        method,
+                                                        key,
+                                                        value))
             except KeyError:
                 invocation.return_dbus_error(
                     self._DBUS_KEY_ERROR,
