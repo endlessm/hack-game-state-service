@@ -127,9 +127,16 @@ class GameStateService(Gio.Application):
         self._dbus_id = None
         self._state = None
 
+    def _ensure_state(self):
+        if self._state is None:
+            self._state = GameState()
+
     def _on_method_called(self, connection, sender, path, iface,
                           method, params, invocation):
         _logger.debug(self._DEBUG_FORMAT.format(sender, method, params))
+
+        self._ensure_state()
+
         key = params[0]
         if method == 'Set':
             value = params.get_child_value(1)
@@ -160,12 +167,9 @@ class GameStateService(Gio.Application):
         connection.unregister_object(self._dbus_id)
         self._dbus_id = None
 
-    def do_startup(self):
-        self._state = GameState()
-        Gio.Application.do_startup(self)
-
     def do_shutdown(self):
-        self._state.flush()
+        if self._state is not None:
+            self._state.flush()
         Gio.Application.do_shutdown(self)
 
 
