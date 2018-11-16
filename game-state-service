@@ -88,6 +88,10 @@ class GameState(object):
         self._state.set_member(key, member)
         self._save_deferred()
 
+    def reset(self):
+        self._state = Json.Object()
+        self._save_deferred()
+
     def flush(self):
         # If there is no pending save, return.
         if self._save_deferred_id is None:
@@ -112,9 +116,13 @@ class GameStateService(Gio.Application):
           <arg type='s' name='key' direction='in'/>
           <arg type='v' name='value' direction='in'/>
         </method>
+        <method name='Reset'>
+        </method>
         <signal name='changed'>
           <arg type='s' name='key'/>
           <arg type='v' name='value'/>
+        </signal>
+        <signal name='reset'>
         </signal>
       </interface>
     </node>
@@ -130,7 +138,11 @@ class GameStateService(Gio.Application):
     def _on_method_called(self, connection, sender, path, iface,
                           method, params, invocation):
         _logger.debug(self._DEBUG_FORMAT.format(sender, method, params))
-        key = params[0]
+
+        key = None
+        if params.n_children() > 0:
+            key = params[0]
+
         if method == 'Set':
             value = params.get_child_value(1)
             self._state.set(key, value)
@@ -145,6 +157,10 @@ class GameStateService(Gio.Application):
                     'key %s does not exist' % key)
             else:
                 invocation.return_value(GLib.Variant('(v)', (value,)))
+        elif method == 'Reset':
+            self._state.reset()
+            connection.emit_signal(None, path, iface, 'reset', None)
+            invocation.return_value(None)
 
     def do_dbus_register(self, connection, path):
         info = Gio.DBusNodeInfo.new_for_xml(self._DBUS_XML)
