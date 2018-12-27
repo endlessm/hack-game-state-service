@@ -91,6 +91,7 @@ class GameState(object):
     def reset(self):
         self._state = Json.Object()
         self._save_deferred()
+        self.flush()
 
     def flush(self):
         # If there is no pending save, return.
