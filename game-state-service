@@ -26,6 +26,9 @@ class GameState(object):
     _FILE_PATH = GLib.build_filenamev([GLib.get_user_data_dir(), 'state.json'])
 
     def __init__(self):
+        self._setup()
+
+    def _setup(self):
         self._state = None
         self._save_deferred_id = None
         self._from_file()
@@ -88,6 +91,9 @@ class GameState(object):
         self._state.set_member(key, member)
         self._save_deferred()
 
+    def reload(self):
+        self._setup()
+
     def reset(self):
         self._state = Json.Object()
         self._save_deferred()
@@ -117,11 +123,15 @@ class GameStateService(Gio.Application):
           <arg type='s' name='key' direction='in'/>
           <arg type='v' name='value' direction='in'/>
         </method>
+        <method name='Reload'>
+        </method>
         <method name='Reset'>
         </method>
         <signal name='changed'>
           <arg type='s' name='key'/>
           <arg type='v' name='value'/>
+        </signal>
+        <signal name='reload'>
         </signal>
         <signal name='reset'>
         </signal>
@@ -158,6 +168,10 @@ class GameStateService(Gio.Application):
                     'key %s does not exist' % key)
             else:
                 invocation.return_value(GLib.Variant('(v)', (value,)))
+        elif method == 'Reload':
+            self._state.reload()
+            connection.emit_signal(None, path, iface, 'reload', None)
+            invocation.return_value(None)
         elif method == 'Reset':
             self._state.reset()
             connection.emit_signal(None, path, iface, 'reset', None)
