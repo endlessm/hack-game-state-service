@@ -23,12 +23,17 @@ install_data(
     install_dir: get_option('bindir')
 )
 
+data_dir = join_paths(get_option('prefix'), get_option('datadir'))
+
+subdir('data')
+
 message('\n'.join([
     '@0@ @1@'.format(meson.project_name(), meson.project_version()),
     '--------------------------------------',
     'Directories:',
     '    prefix: @0@'.format(get_option('prefix')),
     '    bindir: @0@'.format(get_option('bindir')),
+    '    datadir: @0@'.format(data_dir),
     '    session_bus_services_dir: @0@'.format(session_bus_services_dir),
     ''
 ]))
