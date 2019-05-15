@@ -139,12 +139,19 @@ class GameStateService(Gio.Application):
     </node>
     '''
     _DEBUG_FORMAT = 'sender: {}, method: {}, params: {}'
+    _INACTIVITY_TIMEOUT = 5*60*1000  # ms
 
     def __init__(self):
         super().__init__(application_id=self._DBUS_NAME,
+                         inactivity_timeout=self._INACTIVITY_TIMEOUT,
                          flags=Gio.ApplicationFlags.IS_SERVICE)
         self._dbus_id = None
         self._state = None
+
+        # Call hold/release here, so the inactivity-timeout is used correctly
+        # (as the overridden value is only used after a release call).
+        self.hold()
+        self.release()
 
     def _on_method_called(self, connection, sender, path, iface,
                           method, params, invocation):
