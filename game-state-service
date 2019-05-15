@@ -155,6 +155,22 @@ class GameStateService(Gio.Application):
 
     def _on_method_called(self, connection, sender, path, iface,
                           method, params, invocation):
+        # Call hold here, and release at the end of the method so we restart
+        # the inactivity timeout for each method call. This means that the
+        # inactivity timeout will be counted from the last time the GSS was
+        # used, rather then from the moment it was first launched.
+        self.hold()
+
+        try:
+            self._on_method_called_impl(connection, sender, path, iface,
+                                        method, params, invocation)
+        finally:
+            # Ensure release() is always called.
+            self.release()
+
+    def _on_method_called_impl(self, connection, sender, path, iface,
+                               method, params, invocation):
+
         _logger.debug(self._DEBUG_FORMAT.format(sender, method, params))
 
         key = None
