@@ -139,15 +139,38 @@ class GameStateService(Gio.Application):
     </node>
     '''
     _DEBUG_FORMAT = 'sender: {}, method: {}, params: {}'
+    _INACTIVITY_TIMEOUT = 5*60*1000  # ms
 
     def __init__(self):
         super().__init__(application_id=self._DBUS_NAME,
+                         inactivity_timeout=self._INACTIVITY_TIMEOUT,
                          flags=Gio.ApplicationFlags.IS_SERVICE)
         self._dbus_id = None
         self._state = None
 
+        # Call hold/release here, so the inactivity-timeout is used correctly
+        # (as the overridden value is only used after a release call).
+        self.hold()
+        self.release()
+
     def _on_method_called(self, connection, sender, path, iface,
                           method, params, invocation):
+        # Call hold here, and release at the end of the method so we restart
+        # the inactivity timeout for each method call. This means that the
+        # inactivity timeout will be counted from the last time the GSS was
+        # used, rather then from the moment it was first launched.
+        self.hold()
+
+        try:
+            self._on_method_called_impl(connection, sender, path, iface,
+                                        method, params, invocation)
+        finally:
+            # Ensure release() is always called.
+            self.release()
+
+    def _on_method_called_impl(self, connection, sender, path, iface,
+                               method, params, invocation):
+
         _logger.debug(self._DEBUG_FORMAT.format(sender, method, params))
 
         key = None
