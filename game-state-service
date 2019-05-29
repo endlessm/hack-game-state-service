@@ -111,6 +111,8 @@ class GameState(object):
 class GameStateService(Gio.Application):
 
     _DBUS_NAME = 'com.endlessm.GameStateService'
+    _DBUS_IFACE = 'com.endlessm.GameStateService'
+    _DBUS_PATH = '/com/endlessm/GameStateService'
     _DBUS_KEY_ERROR = 'com.endlessm.GameStateService.KeyError'
     _DBUS_XML = '''
     <node>
@@ -188,13 +190,19 @@ class GameStateService(Gio.Application):
             else:
                 invocation.return_value(GLib.Variant('(v)', (value,)))
         elif method == 'Reload':
-            self._state.reload()
-            connection.emit_signal(None, path, iface, 'reload', None)
+            self._reload()
             invocation.return_value(None)
         elif method == 'Reset':
             self._state.reset()
             connection.emit_signal(None, path, iface, 'reset', None)
             invocation.return_value(None)
+
+    def _reload(self):
+        print('Reloading the state')
+        self._state.reload()
+        self.get_dbus_connection().emit_signal(None, self._DBUS_PATH,
+                                               self._DBUS_IFACE,
+                                               'reload', None)
 
     def do_dbus_register(self, connection, path):
         info = Gio.DBusNodeInfo.new_for_xml(self._DBUS_XML)
