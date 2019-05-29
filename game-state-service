@@ -2,6 +2,8 @@
 
 import gi
 import logging
+import sys
+
 gi.require_version('GLib', '2.0')  # noqa
 gi.require_version('Json', '1.0')  # noqa
 from gi.repository import Gio
@@ -146,10 +148,14 @@ class GameStateService(Gio.Application):
     def __init__(self):
         super().__init__(application_id=self._DBUS_NAME,
                          inactivity_timeout=self._INACTIVITY_TIMEOUT,
-                         flags=Gio.ApplicationFlags.IS_SERVICE)
+                         flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self._dbus_id = None
         self._state = None
 
+        self.add_main_option('reload', ord('r'),
+                             GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             'Reload the current GSS file (do this if the '
+                             'file has been overwritten manually).', None)
 
     def _on_method_called(self, connection, sender, path, iface,
                           method, params, invocation):
@@ -232,7 +238,15 @@ class GameStateService(Gio.Application):
         self._state.flush()
         Gio.Application.do_shutdown(self)
 
+    def do_command_line(self, command_line):
+        options = command_line.get_options_dict()
+
+        if options.contains('reload'):
+            self._reload()
+
+        return 0
+
 
 if __name__ == '__main__':
     service = GameStateService()
-    service.run(None)
+    service.run(sys.argv)
