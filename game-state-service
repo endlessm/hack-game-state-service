@@ -148,10 +148,6 @@ class GameStateService(Gio.Application):
         self._dbus_id = None
         self._state = None
 
-        # Call hold/release here, so the inactivity-timeout is used correctly
-        # (as the overridden value is only used after a release call).
-        self.hold()
-        self.release()
 
     def _on_method_called(self, connection, sender, path, iface,
                           method, params, invocation):
@@ -216,6 +212,12 @@ class GameStateService(Gio.Application):
 
     def do_startup(self):
         self._state = GameState()
+
+        # Call hold/release here, so the inactivity-timeout is used correctly
+        # (as the overridden value is only used after a release call).
+        self.hold()
+        self.release()
+
         Gio.Application.do_startup(self)
 
     def do_shutdown(self):
