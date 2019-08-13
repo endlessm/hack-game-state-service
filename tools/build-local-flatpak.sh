@@ -19,10 +19,10 @@ GIT_CLONE_BRANCH=${GIT_CLONE_BRANCH:-'", "type": "dir'}
 REPO=${REPO:-repo}
 
 sed -e "s|@GIT_CLONE_BRANCH@|${GIT_CLONE_BRANCH}|g" \
-    com.endlessm.GameStateService.json.in > com.endlessm.GameStateService.json
+    com.hack_computer.GameStateService.json.in > com.hack_computer.GameStateService.json
 
 # Add any extra options from the user to the flatpak-builder command (e.g. --install)
-flatpak-builder build --user --force-clean com.endlessm.GameStateService.json --repo=${REPO} $@ || ret=$?
+flatpak-builder build --user --force-clean com.hack_computer.GameStateService.json --repo=${REPO} $@ || ret=$?
 
 popd
 

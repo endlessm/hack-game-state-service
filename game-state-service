@@ -112,13 +112,13 @@ class GameState(object):
 
 class GameStateService(Gio.Application):
 
-    _DBUS_NAME = 'com.endlessm.GameStateService'
-    _DBUS_IFACE = 'com.endlessm.GameStateService'
-    _DBUS_PATH = '/com/endlessm/GameStateService'
-    _DBUS_KEY_ERROR = 'com.endlessm.GameStateService.KeyError'
+    _DBUS_NAME = 'com.hack_computer.GameStateService'
+    _DBUS_IFACE = 'com.hack_computer.GameStateService'
+    _DBUS_PATH = '/com/hack_computer/GameStateService'
+    _DBUS_KEY_ERROR = 'com.hack_computer.GameStateService.KeyError'
     _DBUS_XML = '''
     <node>
-      <interface name='com.endlessm.GameStateService'>
+      <interface name='com.hack_computer.GameStateService'>
         <method name='Get'>
           <arg type='s' name='key' direction='in'/>
           <arg type='v' name='value' direction='out'/>

@@ -10,7 +10,7 @@ Simply put, it's the player's save-file. More precisely, is a central service th
 The state-file is just a plain-text file. Progression metadata is stored in this file using the JSON format, in order to keep it human-readable. By default, this file will be located at:
 
 ```
-~/.var/app/com.endlessm.GameStateService/data/state.json
+~/.var/app/com.hack_computer.GameStateService/data/state.json
 ```
 
 As mentioned above, the contents of this `state.json` file are objects serialized with the JSON format. See the following example:
@@ -42,11 +42,11 @@ The GameStateService exposes the API consumed by other components of the desktop
 ```javascript
 const {Gio} = imports.gi;
 
-const BusName = 'com.endlessm.GameStateService';
-const BusPath = '/com/endlessm/GameStateService';
+const BusName = 'com.hack_computer.GameStateService';
+const BusPath = '/com/hack_computer/GameStateService';
 const BusIface = `
 <node>
-  <interface name='com.endlessm.GameStateService'>
+  <interface name='com.hack_computer.GameStateService'>
     <method name='Set'>
       <arg type='s' name='key' direction='in'/>
       <arg type='v' name='value' direction='in'/>
