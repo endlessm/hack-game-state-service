@@ -11,8 +11,8 @@ conf = configuration_data()
 conf.set('bindir', join_paths(get_option('prefix'), get_option('bindir')))
 
 configure_file(
-    input: 'com.endlessm.GameStateService.service.in',
-    output: 'com.endlessm.GameStateService.service',
+    input: 'com.hack_computer.GameStateService.service.in',
+    output: 'com.hack_computer.GameStateService.service',
     install: true,
     install_dir: session_bus_services_dir,
     configuration: conf

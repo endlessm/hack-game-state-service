@@ -1,12 +1,12 @@
 {
-    "app-id": "com.endlessm.GameStateService",
+    "app-id": "com.hack_computer.GameStateService",
     "runtime": "org.gnome.Platform",
     "runtime-version": "3.30",
     "sdk": "org.gnome.Sdk",
     "finish-args": [
         "--share=ipc",
         "--socket=session-bus",
-        "--own-name=com.endlessm.GameStateService"
+        "--own-name=com.hack_computer.GameStateService"
     ],
     "modules": [
         {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop">
-  <id>com.endlessm.GameStateService.desktop</id>
+  <id>com.hack_computer.GameStateService.desktop</id>
   <name>Game State Service</name>
   <summary>Global state for all Hack related affairs</summary>
   <metadata_license>CC0-1.0</metadata_license>

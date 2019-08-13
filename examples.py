@@ -32,9 +32,9 @@ _samples = {
 _proxy = Gio.DBusProxy.new_sync(Gio.bus_get_sync(Gio.BusType.SESSION, None),
                                 0,
                                 None,
-                                'com.endlessm.GameStateService',
-                                '/com/endlessm/GameStateService',
-                                'com.endlessm.GameStateService',
+                                'com.hack_computer.GameStateService',
+                                '/com/hack_computer/GameStateService',
+                                'com.hack_computer.GameStateService',
                                 None)
 
 
