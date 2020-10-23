@@ -23,11 +23,11 @@ import gi
 import logging
 import sys
 
-gi.require_version('GLib', '2.0')  # noqa
-gi.require_version('Json', '1.0')  # noqa
-from gi.repository import Gio
-from gi.repository import GLib
-from gi.repository import Json
+gi.require_version('GLib', '2.0') # noqa
+gi.require_version('Json', '1.0') # noqa
+from gi.repository import Gio # noqa
+from gi.repository import GLib # noqa
+from gi.repository import Json # noqa
 
 
 level = logging.INFO
